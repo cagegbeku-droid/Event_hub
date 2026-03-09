@@ -25,7 +25,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       setUser(session?.user ?? null);
       if (session?.user) {
-        await fetchProfile(session.user.id);
+        if (event === 'signed_in') {
+          await createOrFetchProfile(session.user);
+        } else {
+          await fetchProfile(session.user.id);
+        }
       } else {
         setProfile(null);
       }
@@ -33,6 +37,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => subscription?.unsubscribe();
   }, []);
+
+  const createOrFetchProfile = async (authUser: User) => {
+    const { data: existingProfile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', authUser.id)
+      .maybeSingle();
+
+    if (existingProfile) {
+      setProfile(existingProfile);
+      return;
+    }
+
+    const fullName = authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User';
+    const avatarUrl = authUser.user_metadata?.avatar_url || null;
+
+    const { data: newProfile, error } = await supabase
+      .from('profiles')
+      .insert({
+        id: authUser.id,
+        email: authUser.email,
+        full_name: fullName,
+        avatar_url: avatarUrl,
+        role: 'student',
+      })
+      .select()
+      .single();
+
+    if (!error && newProfile) {
+      setProfile(newProfile);
+    }
+  };
 
   const fetchProfile = async (userId: string) => {
     const { data, error } = await supabase
@@ -56,6 +92,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: {
+            full_name: fullName,
+          },
+        },
       });
 
       if (authError) throw authError;
@@ -67,6 +108,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           id: authData.user.id,
           email,
           full_name: fullName,
+          role: 'student',
         });
 
       if (profileError) throw profileError;
