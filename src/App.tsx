@@ -7,6 +7,8 @@ import Auth from './components/Auth';
 import EventDiscovery from './pages/EventDiscovery';
 import EventDetail from './pages/EventDetail';
 import Legal from './pages/Legal';
+import CreateEvent from './pages/CreateEvent';
+import MyEvents from './pages/MyEvents';
 
 function AppContent() {
   const { loading } = useAuth();
@@ -27,6 +29,8 @@ function AppContent() {
         <Route path="/auth" element={<Auth />} />
         <Route path="/events" element={<EventDiscovery />} />
         <Route path="/event/:id" element={<EventDetail />} />
+        <Route path="/create-event" element={<CreateEvent />} />
+        <Route path="/my-events" element={<MyEvents />} />
         <Route path="/terms" element={<Legal />} />
         <Route path="/privacy" element={<Legal />} />
         <Route path="/cookies" element={<Legal />} />
