@@ -53,7 +53,9 @@ export default function AuthModal({ onClose }: AuthModalProps) {
     try {
       await signInWithGoogle();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      const errorMsg = err instanceof Error ? err.message : 'An error occurred';
+      console.error('Google Sign-In Error:', err);
+      setError(errorMsg);
       setLoading(false);
     }
   };
@@ -73,8 +75,15 @@ export default function AuthModal({ onClose }: AuthModalProps) {
         </h2>
 
         {error && (
-          <div className="bg-red-500 bg-opacity-10 border border-red-500 text-red-500 px-4 py-3 rounded mb-4">
-            {error}
+          <div className="bg-red-500 bg-opacity-10 border border-red-500 text-red-500 px-4 py-3 rounded mb-4 text-sm">
+            {error === 'Google Sign-In not configured' || error.includes('oauth') ? (
+              <>
+                <div className="font-semibold mb-2">Google Sign-In Setup Required</div>
+                <div className="text-xs">Google OAuth needs to be configured in your Supabase project settings. Please contact your administrator or configure it in the Supabase dashboard.</div>
+              </>
+            ) : (
+              error
+            )}
           </div>
         )}
 
